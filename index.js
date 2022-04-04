@@ -41,7 +41,7 @@ const PAGE_PUPPETEER_OPTS = {
 };
 
 async function fetchSongUrl(url) {
-    const browser = await puppeteer.launch(LAUNCH_PUPPETEER_OPTS)
+    const browser = await puppeteer.launch({headless: true})
     const page = await browser.newPage()
     await page.setUserAgent(userAgent.toString())
     await page.goto(url, PAGE_PUPPETEER_OPTS)
