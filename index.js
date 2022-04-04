@@ -24,6 +24,7 @@ client.connect()
 
 const LAUNCH_PUPPETEER_OPTS = {
     args: [
+        '--headless: true',
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
