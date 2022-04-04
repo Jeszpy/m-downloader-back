@@ -63,6 +63,7 @@ app.get('/api/collection', async (req, res) => {
         res.status(404).send(err.stack)
     }
 })
+
 app.post('/api/download', async (req, res) => {
     const data = await fetchSongUrl(req.body.url)
     try {
