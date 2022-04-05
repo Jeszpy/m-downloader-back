@@ -40,7 +40,7 @@ const PAGE_PUPPETEER_OPTS = {
 };
 
 async function fetchSongUrl(url) {
-    const browser = await puppeteer.launch({ args: ['--no-sandbox'] })
+    const browser = await puppeteer.launch({args: ['--no-sandbox']})
     const page = await browser.newPage()
     await page.setUserAgent(userAgent.toString())
     await page.goto(url, PAGE_PUPPETEER_OPTS)
@@ -67,17 +67,36 @@ app.get('/api/collection', async (req, res) => {
 app.post('/api/download', async (req, res) => {
     const data = await fetchSongUrl(req.body.url)
     try {
-        const selectQuery = 'select * from music where cdn = VALUES($1)'
-        const selectValues = [data.cdn]
-        const select = await client.query(selectQuery, selectValues)
-        console.log(select.rows)
-        const insertQuery = 'INSERT INTO music (title, cdn, img) VALUES($1, $2, $3)'
-        const insertValues = [data.title, data.cdn, data.img]
-        await client.query(insertQuery, insertValues)
-        res.status(200).send(data)
+        const query = {
+            name: 'check song in DB',
+            text: 'SELECT * FROM music WHERE cdn = $1',
+            values: [data.cdn],
+        }
+        await client.query(query, async (err, q) => {
+            if (err) {
+                res.status(404).send(err.stack)
+            } else {
+                if (q.rows[0]) {
+                    res.status(200).send(data)
+                    return
+                } else {
+                    const insertQuery = 'INSERT INTO music (title, cdn, img) VALUES($1, $2, $3)'
+                    const insertValues = [data.title, data.cdn, data.img]
+                    await client.query(insertQuery, insertValues)
+                    res.status(200).send(data)
+                    return
+                }
+            }
+        })
+        return
     } catch (err) {
         res.status(404).send(err.stack)
     }
+})
+
+app.delete('/api/clearCollection', async (req, res) => {
+    await client.query('delete from music')
+    res.send(204)
 })
 
 app.listen(PORT, () => {
