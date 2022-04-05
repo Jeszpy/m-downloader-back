@@ -24,7 +24,6 @@ client.connect()
 
 const LAUNCH_PUPPETEER_OPTS = {
     args: [
-        '--headless: true',
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
@@ -57,30 +56,27 @@ async function fetchSongUrl(url) {
 }
 
 app.get('/api/collection', async (req, res) => {
-    console.log('start get req')
     try {
         const data = await client.query('select * from music')
         res.status(200).send(data.rows)
-        console.log('get success')
     } catch (err) {
         res.status(404).send(err.stack)
-        console.log('get error')
     }
 })
 
 app.post('/api/download', async (req, res) => {
-    console.log('start post req')
     const data = await fetchSongUrl(req.body.url)
-    console.log('incoming data:', data)
     try {
-        const text = 'INSERT INTO music (title, cdn, img) VALUES($1, $2, $3)'
-        const values = [data.title, data.cdn, data.img]
-        await client.query(text, values)
+        const selectQuery = 'select * from music where cdn = VALUES($1)'
+        const selectValues = [data.cdn]
+        const select = await client.query(selectQuery, selectValues)
+        console.log(select.rows)
+        const insertQuery = 'INSERT INTO music (title, cdn, img) VALUES($1, $2, $3)'
+        const insertValues = [data.title, data.cdn, data.img]
+        await client.query(insertQuery, insertValues)
         res.status(200).send(data)
-        console.log('post success')
     } catch (err) {
         res.status(404).send(err.stack)
-        console.log('post error:', err.stack)
     }
 })
 
